@@ -21,6 +21,8 @@ export class VoiceEngine {
   private currentStatus: VoiceStatus = 'idle';
   private synth: SpeechSynthesis | null = null;
   private isSpeaking = false;
+  private lastSpokenText = '';
+  private lastSpokenTimestamp = 0;
 
   constructor() {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -90,6 +92,19 @@ export class VoiceEngine {
   public async processInput(text: string, confidenceScore: number = 0.92) {
     if (this.isSpeaking || this.currentStatus === 'speaking') return;
     if (!text || text.trim().length === 0) return;
+
+    // Echo cancellation: if microphone heard what the assistant just spoken, drop it
+    const cleanInput = text.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (this.lastSpokenText && (Date.now() - this.lastSpokenTimestamp < 6000)) {
+      if (
+        cleanInput.includes(this.lastSpokenText) ||
+        this.lastSpokenText.includes(cleanInput) ||
+        cleanInput.includes('openingdefaultbrowser') ||
+        cleanInput.includes('supportedcommands')
+      ) {
+        return;
+      }
+    }
 
     this.setStatus('processing');
     const settings = SettingsManager.getSettings();
@@ -269,8 +284,13 @@ export class VoiceEngine {
     const settings = SettingsManager.getSettings();
     if (!settings.soundFeedback) return;
 
+    this.lastSpokenText = message.toLowerCase().replace(/[^a-z0-9]/g, '');
+    this.lastSpokenTimestamp = Date.now();
     this.isSpeaking = true;
     this.setStatus('speaking');
+
+    // Mute and abort active speech recognition to avoid hearing ourselves
+    speechService.pause();
     this.synth.cancel();
 
     const utterance = new SpeechSynthesisUtterance(message);
@@ -285,21 +305,20 @@ export class VoiceEngine {
       utterance.lang = 'en-US';
     }
 
-    utterance.onend = () => {
+    const onFinish = () => {
       setTimeout(() => {
         this.isSpeaking = false;
         if (speechService.getListeningState()) {
+          speechService.resume();
           this.setStatus('listening');
         } else {
           this.setStatus('idle');
         }
-      }, 350);
+      }, 500);
     };
 
-    utterance.onerror = () => {
-      this.isSpeaking = false;
-      this.setStatus('idle');
-    };
+    utterance.onend = onFinish;
+    utterance.onerror = onFinish;
 
     this.synth.speak(utterance);
   }

@@ -15,6 +15,7 @@ interface IWindow extends Window {
 export class SpeechRecognitionService {
   private recognition: any = null;
   private isListening = false;
+  private isPaused = false;
   private audioStream: MediaStream | null = null;
   private audioContext: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
@@ -93,6 +94,8 @@ export class SpeechRecognitionService {
       };
 
       this.recognition.onresult = (event: any) => {
+        if (this.isPaused) return; // Drop audio while assistant is speaking
+
         let interimTranscript = '';
         let finalTranscript = '';
         let highestConfidence = 0.85;
@@ -131,6 +134,10 @@ export class SpeechRecognitionService {
       };
 
       this.recognition.onend = () => {
+        if (this.isPaused) {
+          // Temporarily paused while assistant speaks; resume() will restart
+          return;
+        }
         // If still supposed to be listening, restart (continuous mode resilience)
         if (this.isListening) {
           try {
@@ -180,7 +187,30 @@ export class SpeechRecognitionService {
     return this.analyser;
   }
 
+  public pause() {
+    this.isPaused = true;
+    if (this.recognition) {
+      try {
+        this.recognition.abort(); // Immediately terminates recognition and flushes speech buffers
+      } catch {
+        // Ignored
+      }
+    }
+  }
+
+  public resume() {
+    this.isPaused = false;
+    if (this.isListening) {
+      try {
+        this.recognition?.start();
+      } catch {
+        // Ignored if already started
+      }
+    }
+  }
+
   public stop() {
+    this.isPaused = false;
     this.isListening = false;
     if (this.animFrameId) {
       cancelAnimationFrame(this.animFrameId);
