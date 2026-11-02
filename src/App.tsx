@@ -8,6 +8,7 @@ import { ActivityHistory } from './components/ActivityHistory';
 import { SettingsModal } from './components/SettingsModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { ToastContainer } from './components/ToastContainer';
+import { FloatingHudIsland } from './components/FloatingHudIsland';
 
 import { VoiceStatus, SystemStatus, ParsedCommand, ActionIntent, ActivityLog } from './modules/models';
 import { voiceEngine } from './modules/VoiceEngine';
@@ -267,6 +268,19 @@ export const App: React.FC = () => {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onSettingsChanged={(newSt) => setSettings(newSt)}
+      />
+
+      {/* Persistent Screen HUD Island (Toggle Top/Bottom, ON/OFF) */}
+      <FloatingHudIsland
+        voiceStatus={voiceStatus}
+        audioLevel={audioLevel}
+        transcript={transcript}
+        aiResponse={aiResponse}
+        privacyMode={settings.privacyMode}
+        onToggleListening={handleToggleListening}
+        onTogglePrivacy={() => handleTogglePrivacy()}
+        onTriggerLock={() => handleTriggerIntent('LOCK_SYSTEM')}
+        onTriggerBrowser={() => handleTriggerIntent('OPEN_BROWSER')}
       />
 
       {/* Toast Alert System */}
