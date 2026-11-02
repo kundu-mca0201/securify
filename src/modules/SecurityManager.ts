@@ -53,3 +53,4 @@ export class SecurityManager {
     SettingsManager.updateSettings({ privacyMode: enabled });
   }
 }
+

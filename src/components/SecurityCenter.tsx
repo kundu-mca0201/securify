@@ -189,3 +189,4 @@ export const SecurityCenter: React.FC<SecurityCenterProps> = ({
     </div>
   );
 };
+

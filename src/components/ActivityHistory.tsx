@@ -188,3 +188,4 @@ export const ActivityHistory: React.FC<ActivityHistoryProps> = ({ logs, onClearL
     </div>
   );
 };
+

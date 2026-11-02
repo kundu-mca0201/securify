@@ -4,3 +4,4 @@
 fn main() {
     securemate_ai::run();
 }
+

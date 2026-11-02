@@ -162,3 +162,4 @@ export const QuickCommands: React.FC<QuickCommandsProps> = ({ onTriggerIntent, o
     </div>
   );
 };
+

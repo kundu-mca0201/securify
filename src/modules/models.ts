@@ -64,3 +64,4 @@ export interface ParsedCommand {
   isDestructive: boolean;
   explanation: string;
 }
+

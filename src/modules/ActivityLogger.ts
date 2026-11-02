@@ -107,3 +107,4 @@ export class ActivityLogger {
     return JSON.stringify(this.getLogs(), null, 2);
   }
 }
+

@@ -172,3 +172,4 @@ export const ComputerStatus: React.FC<ComputerStatusProps> = ({
     </div>
   );
 };
+

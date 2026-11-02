@@ -47,3 +47,4 @@ export class NotificationManager {
     this.notify();
   }
 }
+

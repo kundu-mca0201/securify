@@ -27,3 +27,4 @@ windows-sys = { version = "0.52", features = ["Win32_UI_WindowsAndMessaging", "W
 [features]
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
+

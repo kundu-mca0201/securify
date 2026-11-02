@@ -237,3 +237,4 @@ export const AiAssistantOrb: React.FC<AiAssistantOrbProps> = ({
     </div>
   );
 };
+

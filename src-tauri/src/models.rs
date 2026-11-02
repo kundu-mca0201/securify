@@ -38,3 +38,4 @@ pub struct CommandPayload {
     pub raw_command: String,
     pub language: Option<String>,
 }
+

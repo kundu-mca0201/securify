@@ -102,3 +102,4 @@ This produces native installable packages:
 - **macOS**: `.dmg` / `.app`
 - **Windows**: `.msi` / `.exe`
 - **Linux**: `.deb` / `.AppImage`
+
