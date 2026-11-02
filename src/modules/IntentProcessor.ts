@@ -6,10 +6,12 @@ export class IntentProcessor {
 
   public static parse(input: string): ParsedCommand {
     const raw = input.trim();
-    const text = raw.toLowerCase();
+    // Normalize text: clean punctuation marks commonly appended by speech-to-text engines
+    const cleanRaw = raw.replace(/[.,!?:;]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const text = cleanRaw.toLowerCase();
 
     // Check for Wake words
-    const wakeWordPattern = /(hey|ok|hello|namaste|sun)?\s*(secure\s*mate|securemate|mate)/i;
+    const wakeWordPattern = /(hey|ok|hello|namaste|sun|suno)?\s*(secure\s*mate|securemate|mate)/i;
     const cleanedText = text.replace(wakeWordPattern, '').trim();
     const query = cleanedText.length > 0 ? cleanedText : text;
 
@@ -117,24 +119,25 @@ export class IntentProcessor {
     }
 
     // 6. OPEN BROWSER / APPS
-    // English: "open chrome", "open browser", "launch safari", "open code", "open terminal"
-    // Hindi / Hinglish: "chrome kholo", "browser kholiye", "terminal open karo", "ब्राउज़र खोलो"
+    // English: "open chrome", "open crome", "open browser", "launch safari", "open code", "open terminal"
+    // Hindi / Hinglish: "chrome kholo", "crome kholo", "browser kholiye", "terminal open karo", "ब्राउज़र खोलो"
     const openAppMatch = query.match(/(?:open|launch|start|kholo|kholiye|खोलो)\s+([a-zA-Z0-9\s._-]+)/i) ||
                          query.match(/([a-zA-Z0-9._-]+)\s+(?:kholo|kholiye|open\s*karo)/i);
 
     if (openAppMatch && openAppMatch[1]) {
-      const target = openAppMatch[1].trim().toLowerCase();
+      const rawTarget = openAppMatch[1].trim().toLowerCase().replace(/[.,!?:;]+/g, '');
+      const target = rawTarget === 'crome' || rawTarget === 'chrom' ? 'chrome' : rawTarget;
       
       // Filter out non-app keywords
       if (['listening', 'computer', 'laptop', 'system', 'pc'].includes(target)) {
         // Not an app
       } else {
-        const isBrowser = ['chrome', 'browser', 'firefox', 'safari', 'edge', 'brave', 'internet', 'google'].includes(target);
+        const isBrowser = ['chrome', 'crome', 'chrom', 'google chrome', 'browser', 'firefox', 'safari', 'edge', 'microsoft edge', 'brave', 'internet', 'google'].includes(target);
         return {
           intent: isBrowser ? 'OPEN_BROWSER' : 'OPEN_APP',
-          confidence: 0.92,
+          confidence: 0.94,
           language: lang,
-          targetApp: target,
+          targetApp: isBrowser ? 'chrome' : target,
           isDestructive: false,
           explanation: lang === 'hi' ? `${target} एप्लिकेशन खोला जा रहा है` :
                        lang === 'hinglish' ? `${target} open kiya ja raha hai` :

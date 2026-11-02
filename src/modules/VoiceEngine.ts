@@ -20,6 +20,7 @@ export class VoiceEngine {
   private events: VoiceEngineEvents | null = null;
   private currentStatus: VoiceStatus = 'idle';
   private synth: SpeechSynthesis | null = null;
+  private isSpeaking = false;
 
   constructor() {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -52,6 +53,8 @@ export class VoiceEngine {
 
     const started = await speechService.start({
       onResult: (transcript, isFinal, confidence) => {
+        // Avoid audio feedback loop while assistant is talking
+        if (this.isSpeaking || this.currentStatus === 'speaking') return;
         this.events?.onTranscript(transcript, isFinal);
         if (isFinal) {
           this.processInput(transcript, confidence);
@@ -85,6 +88,7 @@ export class VoiceEngine {
 
   // Process natural voice or typed command
   public async processInput(text: string, confidenceScore: number = 0.92) {
+    if (this.isSpeaking || this.currentStatus === 'speaking') return;
     if (!text || text.trim().length === 0) return;
 
     this.setStatus('processing');
@@ -265,6 +269,7 @@ export class VoiceEngine {
     const settings = SettingsManager.getSettings();
     if (!settings.soundFeedback) return;
 
+    this.isSpeaking = true;
     this.setStatus('speaking');
     this.synth.cancel();
 
@@ -281,14 +286,18 @@ export class VoiceEngine {
     }
 
     utterance.onend = () => {
-      if (speechService.getListeningState()) {
-        this.setStatus('listening');
-      } else {
-        this.setStatus('idle');
-      }
+      setTimeout(() => {
+        this.isSpeaking = false;
+        if (speechService.getListeningState()) {
+          this.setStatus('listening');
+        } else {
+          this.setStatus('idle');
+        }
+      }, 350);
     };
 
     utterance.onerror = () => {
+      this.isSpeaking = false;
       this.setStatus('idle');
     };
 

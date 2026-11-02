@@ -11,6 +11,8 @@ export class CommandValidator {
   // Strict allowlist of safe applications that can be launched via voice
   private static ALLOWED_APPLICATIONS = new Set([
     'chrome',
+    'crome',
+    'chrom',
     'google chrome',
     'safari',
     'firefox',
@@ -20,10 +22,12 @@ export class CommandValidator {
     'terminal',
     'iterm',
     'calculator',
+    'calc',
     'code',
     'vscode',
     'visual studio code',
     'notes',
+    'notepad',
     'spotify',
     'slack',
     'discord',
@@ -54,7 +58,15 @@ export class CommandValidator {
       };
     }
 
-    // 2. Intent Allowlist check
+    // 2. Intent Recognition & Allowlist check
+    if (command.intent === 'UNKNOWN') {
+      return {
+        isValid: false,
+        requiresConfirmation: false,
+        reason: command.explanation || 'Command not recognized. Please try saying "lock my laptop", "open chrome", or check Quick Commands.',
+      };
+    }
+
     if (!this.ALLOWED_INTENTS.has(command.intent)) {
       return {
         isValid: false,
@@ -74,7 +86,9 @@ export class CommandValidator {
 
     // 4. App Launch Validation
     if (command.intent === 'OPEN_APP' || command.intent === 'OPEN_BROWSER') {
-      const target = (command.targetApp || '').trim().toLowerCase();
+      const rawTarget = (command.targetApp || '').trim().toLowerCase().replace(/[.,!?:;]+/g, '');
+      const target = rawTarget === 'crome' || rawTarget === 'chrom' ? 'chrome' : rawTarget;
+      command.targetApp = target;
       
       // Strict regex sanitization: only alphanumeric characters, spaces, dashes
       if (!/^[a-z0-9\s_-]+$/i.test(target)) {
